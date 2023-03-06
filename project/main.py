@@ -1,6 +1,6 @@
 import datetime
 import pprint
-
+import json
 def low_price():
 	return 'Эта команда для поиска самых дешёвых отелей в городе'
 
@@ -26,26 +26,48 @@ headers = {
 	"X-RapidAPI-Host": "hotels4.p.rapidapi.com"
 }
 
-params = {'q': 'Рига', 'locate': 'ru_RU'}
-response = requests.request("GET", url, headers=headers, params=params)
+params = {'q': 'New York', 'locate': 'ru_RU'}
+response = requests.get(url, headers=headers, params=params)
 
 pprint.pprint(response.text)
 
 url2 = 'https://hotels4.p.rapidapi.com/properties/v2/list'
 
-payload = {'currency': 'USD',
-           'eapid': 1,
-           'locale': 'ru_RU',
-           'siteId': 300000001,
-           'destination': '3000', # id из первого запроса,
-           'checkInDate': {'day': 3, 'month': 3, 'year': 2023},
-           'checkOutDate': {'day': 6, 'month': 3, 'year': 2023},
-           'rooms': [{'adults': 1}],
-           'resultsStartingIndex': 0,
-           'resultsSize': 10,
-           'sort': 'PRICE_LOW_TO_HIGH',
-           'filters': {'availableFilter': 'SHOW_AVAILABLE_ONLY'}
-           }
 
-response = requests.request('POST', url=url2, headers=headers, params=payload)
-pprint.pprint(response.text)
+
+
+payload = {
+    "currency": "USD",
+    "eapid": 1,
+    "locale": "ru_RU",
+    "siteId": 300000001,
+    "destination": {
+        "regionId": "3000"
+    },
+    "checkInDate": {
+        "day": 10,
+        "month": 10,
+        "year": 2023
+    },
+    "checkOutDate": {
+        "day": 15,
+        "month": 10,
+        "year": 2023
+    },
+    "rooms": [{
+            "adults": 1
+        }
+    ],
+    "resultsStartingIndex": 0,
+    "resultsSize": 10,
+    "sort": "PRICE_LOW_TO_HIGH",
+    "filters": {"availableFilter": "SHOW_AVAILABLE_ONLY" }
+}
+
+
+print('\n\n\n\n\n\n')
+
+
+response2 = requests.post(url=url2, headers=headers, params=payload)
+pprint.pprint(response2.text)
+
