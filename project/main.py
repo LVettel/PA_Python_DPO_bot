@@ -33,16 +33,13 @@ pprint.pprint(response.text)
 
 url2 = 'https://hotels4.p.rapidapi.com/properties/v2/list'
 
-
-
-
 payload = {
     "currency": "USD",
     "eapid": 1,
     "locale": "ru_RU",
     "siteId": 300000001,
     "destination": {
-        "regionId": "3000"
+        "regionId": "2621"
     },
     "checkInDate": {
         "day": 10,
