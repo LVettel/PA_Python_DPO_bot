@@ -52,7 +52,7 @@ payload = {
         "year": 2023
     },
     "rooms": [{
-            "adults": 1
+            "adults": 2
         }
     ],
     "resultsStartingIndex": 0,
@@ -66,5 +66,6 @@ print('\n\n\n\n\n\n')
 
 
 response2 = requests.post(url=url2, headers=headers, params=payload)
+
 pprint.pprint(response2.text)
 
