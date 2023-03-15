@@ -9,6 +9,12 @@ from create_bot import dp
 # search.register_message_handler(dp)
 
 async def bothelp(message: types.Message):
+	"""
+	Хендлер бота, реагирующий на команды /start и /help.
+	Возвращает список и краткое описание команд.
+	:param message:
+	:return:
+	"""
 	keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
 	button_1 = types.KeyboardButton(text='/lowprice')
 	button_2 = types.KeyboardButton(text='/highprice')
@@ -46,6 +52,11 @@ async def history(message: types.Message):
 	await message.reply('История поиска.', reply_markup=types.ReplyKeyboardRemove())
 
 def register_handlers_main(dp: Dispatcher):
+	"""
+	Функция регистрации хендлеров модуля в боте.
+	:param dp:
+	:return:
+	"""
 	dp.register_message_handler(callback=bothelp, commands=['start', 'help'])
 	#
 	# dp.register_message_handler(callback=low_price, commands=['highprice'])
