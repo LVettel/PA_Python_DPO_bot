@@ -9,3 +9,4 @@ lowprice.register_handlers_lowprice(dp)
 
 if __name__ == '__main__':
 	executor.start_polling(dp, skip_updates=False)
+	print('бот начал работать ')

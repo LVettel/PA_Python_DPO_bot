@@ -17,7 +17,7 @@ async def start_lowprice(message: types.Message):
 	"""
 	Начало составления конфигурации поиска по команде /lowprice и /bestdeal
 	"""
-	sort[0] = 'PRICE_LOW_TO_HIGH'
+	# sort[0] = 'PRICE_LOW_TO_HIGH'
 	await FSM_search.city.set()
 	await message.reply('Это команда для поиска самых дешёвых отелей в городе.\n'
 						'Введите город, в котором хотите остановиться.',
@@ -28,7 +28,7 @@ async def start_highprice(message: types.Message):
 	"""
 	Начало составления конфигурации поиска по команде /highprice
 	"""
-	sort[0] = 'PRICE_HIGH_TO_LOW'
+	# sort[0] = 'PRICE_HIGH_TO_LOW'
 	await FSM_search.city.set()
 	await message.reply('Это команда для поиска самых дешёвых отелей в городе.\n'
 						'Введите город, в котором хотите остановиться.',
@@ -44,8 +44,13 @@ async def city_name(message: types.Message, state: FSMContext):
 
 	async with state.proxy() as data:
 		data['city_id'] = search.city_search(name= message.text)
-	await FSM_search.next()
-	await message.answer('Введите количество комнат.')
+		if data['city_id'] is not 'none':
+			await FSM_search.next()
+			await message.answer('Введите количество комнат.')
+		else:
+			await state.finish()
+			await message.reply('Такого города нет в нашем каталоге')
+
 
 
 async def rooms_set(message: types.Message, state: FSMContext):

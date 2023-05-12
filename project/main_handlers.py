@@ -20,7 +20,8 @@ async def bothelp(message: types.Message):
 	button_2 = types.KeyboardButton(text='/highprice')
 	button_3 = types.KeyboardButton(text='/bestdeal')
 	button_4 = types.KeyboardButton(text='/history')
-	keyboard.add(button_1, button_2, button_3, button_4)
+	button_5 = types.KeyboardButton(text='/help')
+	keyboard.add(button_1, button_2, button_3, button_4, button_5)
 	await message.reply('Привет!\n'
 						'Это бот турагенства To Easy Travel.\n'
 						'С помощью этого бота вы можете получить следующую информацию:\n'

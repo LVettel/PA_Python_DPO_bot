@@ -111,8 +111,8 @@ payload = {
     "resultsSize": 200,
     "sort": "PRICE_LOW_TO_HIGH",
     "filters": {"price": {
-        "max": 150,
-        "min": 100
+        "max": 200,
+        "min": 1
     }}
 }
 
@@ -131,6 +131,7 @@ url3 = 'https://hotels4.p.rapidapi.com/properties/v2/detail'
 
 hotel_params = {"id": "526046"}
 response3 = requests.request("POST", url3, json=hotel_params, headers=headers)
+pprint.pprint(response3)
 
 
 

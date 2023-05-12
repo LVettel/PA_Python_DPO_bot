@@ -4,7 +4,7 @@ import requests
 import json
 
 
-def city_search(name) -> str:
+def city_search(name: str) -> str:
 	"""
 	Функция поиска нужного города.
 	Возвращает id города.
@@ -13,7 +13,7 @@ def city_search(name) -> str:
 	"""
 	url = "https://hotels4.p.rapidapi.com/locations/v3/search"
 
-	querystring = {"q": "{}".format(name), "locale": "ru_RU", "langid": "1033", "siteid": "300000001"}
+	querystring = {"q": "{}".format(name.islower()), "locale": "ru_RU", "langid": "1033", "siteid": "300000001"}
 
 	headers = {
 		"X-RapidAPI-Key": "14cb351c01msh1c48214e3041834p18ae28jsndbaf16e16c16",
@@ -23,7 +23,11 @@ def city_search(name) -> str:
 	response = requests.request("GET", url, headers=headers, params=querystring)
 	data = json.loads(response.text)
 	# hotel_search(id=data['sr'][0]['gaiaId'])
-	return data['sr'][0]['gaiaId']
+	if 'gaiaId' in data['sr'][0]:
+		return data['sr'][0]['gaiaId']
+	else:
+		return 'none'
+
 
 
 def hotel_search(id: str, rooms: int, in_date: list, out_date: list, sort: str):
@@ -46,7 +50,7 @@ def hotel_search(id: str, rooms: int, in_date: list, out_date: list, sort: str):
 	payload = {
 		"currency": "USD",
 		"eapid": 1,
-		"locale": "en_US",
+		"locale": "ru_RU",
 		"siteId": 300000001,
 		"destination": {"regionId": "{}".format(id)},
 		"checkInDate": {
@@ -66,8 +70,8 @@ def hotel_search(id: str, rooms: int, in_date: list, out_date: list, sort: str):
 		"resultsSize": 200,
 		"sort": "{}".format(sort),
 		"filters": {"price": {
-			"max": 150,
-			"min": 100
+			"max": 200,
+			"min": 1
 		}}
 	}
 
