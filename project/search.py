@@ -5,74 +5,166 @@ import json
 
 
 def city_search(name: str) -> str:
-	"""
+    """
 	Функция поиска нужного города.
 	Возвращает id города.
 	:param name:
 	:return:
 	"""
-	url = "https://hotels4.p.rapidapi.com/locations/v3/search"
+    url = "https://hotels4.p.rapidapi.com/locations/v3/search"
 
-	querystring = {"q": "{}".format(name.islower()), "locale": "ru_RU", "langid": "1033", "siteid": "300000001"}
+    querystring = {"q": "{}".format(name), "locale": "ru_RU", "langid": "1033", "siteid": "300000001"}
 
-	headers = {
-		"X-RapidAPI-Key": "14cb351c01msh1c48214e3041834p18ae28jsndbaf16e16c16",
-		"X-RapidAPI-Host": "hotels4.p.rapidapi.com"
-	}
+    headers = {
+        "X-RapidAPI-Key": "14cb351c01msh1c48214e3041834p18ae28jsndbaf16e16c16",
+        "X-RapidAPI-Host": "hotels4.p.rapidapi.com"
+    }
 
-	response = requests.request("GET", url, headers=headers, params=querystring)
-	data = json.loads(response.text)
-	# hotel_search(id=data['sr'][0]['gaiaId'])
-	if 'gaiaId' in data['sr'][0]:
-		return data['sr'][0]['gaiaId']
-	else:
-		return 'none'
+    response = requests.request("GET", url, headers=headers, params=querystring)
+    data = json.loads(response.text)
+    # hotel_search(id=data['sr'][0]['gaiaId'])
+    if 'gaiaId' in data['sr'][0]:
+        return data['sr'][0]['gaiaId']
+    else:
+        return 'none'
 
 
 
-def hotel_search(id: str, rooms: int, in_date: list, out_date: list, sort: str):
-	"""
+
+
+def hotel_search(id: str,
+                 rooms: int,
+                 in_date: list,
+                 out_date: list,
+                 sort: str,
+                 photo:list,
+                 hotel_count=5,
+                 ) -> str:
+    """
 	Функция поиска отелей в найденном городе.
 	Возвращает список отсортированных по цене отелей.
-	:param id:
+    :param hotel_count: int
+    :param photo: list
+	:param id: str
 	:param rooms: int
 	:param in_date: list(str)
 	:param out_date: list(str)
 	:param sort: str
-	:return:
+	:return: str
 	"""
-	url = "https://hotels4.p.rapidapi.com/properties/v2/list"
+    url = "https://hotels4.p.rapidapi.com/properties/v2/list"
 
-	headers = {
-		"X-RapidAPI-Key": "14cb351c01msh1c48214e3041834p18ae28jsndbaf16e16c16",
-		"X-RapidAPI-Host": "hotels4.p.rapidapi.com"
-	}
-	payload = {
-		"currency": "USD",
-		"eapid": 1,
-		"locale": "ru_RU",
-		"siteId": 300000001,
-		"destination": {"regionId": "{}".format(id)},
-		"checkInDate": {
-			"day": int(in_date[0]),
-			"month": int(in_date[1]),
-			"year": int(in_date[2])
-		},
-		"checkOutDate": {
-			"day": int(out_date[0]),
-			"month": int(out_date[1]),
-			"year": int(out_date[2])
-		},
-		"rooms": [
-			{"adults": int(rooms)}
-		],
-		"resultsStartingIndex": 0,
-		"resultsSize": 200,
-		"sort": "{}".format(sort),
-		"filters": {"price": {
-			"max": 200,
-			"min": 1
-		}}
-	}
+    headers = {
+        "X-RapidAPI-Key": "14cb351c01msh1c48214e3041834p18ae28jsndbaf16e16c16",
+        "X-RapidAPI-Host": "hotels4.p.rapidapi.com"
+    }
+    payload = {
+        "currency": "USD",
+        "eapid": 1,
+        "locale": "ru_RU",
+        "siteId": 300000001,
+        "destination": {"regionId": "{}".format(id)},
+        "checkInDate": {
+            "day": int(in_date[0]),
+            "month": int(in_date[1]),
+            "year": int(in_date[2])
+        },
+        "checkOutDate": {
+            "day": int(out_date[0]),
+            "month": int(out_date[1]),
+            "year": int(out_date[2])
+        },
+        "rooms": [
+            {"adults": int(rooms)}
+        ],
+        "resultsStartingIndex": 0,
+        "resultsSize": 200,
+        "sort": "{}".format(sort),
+        "filters": {"price": {
+            "max": 200,
+            "min": 1
+        }}
+    }
 
-	response = requests.request("POST", url, json=payload, headers=headers)
+    response = requests.request("POST", url, json=payload, headers=headers)
+    data = json.loads(response.text)
+    hotel_list = [
+        {data["data"]["propertySearch"]["properties"][i_num]["name"]: {
+			'id': data["data"]["propertySearch"]["properties"][i_num]["id"],
+            'min_price': data["data"]["propertySearch"]["properties"][i_num]["mapMarker"]["label"],
+        }
+            for i_num in range(hotel_count)}
+    ]
+    answer_text = 'По вашему запросу найден результат:\n\n'
+    for hotel, desc in hotel_list[0].items():
+        answer_text += "\tНазвание отеля: {name}.\n" \
+                       "\t\tМинимальная цена: {price} в день.\n" \
+                       "\t\tАдрес: {adress}.\n".format(
+            name=hotel,
+            price=desc['min_price'],
+            adress=get_address(desc['id'])
+        )
+        if (photo[0] == 'да') or (photo[0] == 'Да'):
+            answer_text += '\n {photourl} \n\n\n'.format(photourl=get_photo(
+                                                                                            count_photo=int(photo[1]),
+                                                                                            hotel_id=desc['id']
+        ))
+        else:
+            answer_text += '\n\n'
+
+
+    return answer_text
+
+def get_address(hotel_id: str) -> list:
+    """
+    Функция для получения адреса отеля.
+    :param hotel_id: str
+    :return: list
+    """
+    url3 = 'https://hotels4.p.rapidapi.com/properties/v2/detail'
+
+    hotel_params = {
+        "currency": "USD",
+        "eapid": 1,
+        "locale": "en_US",
+        "siteId": 300000001,
+        "propertyId": hotel_id
+    }
+    response3 = requests.request("POST", url3, json=hotel_params, headers= {
+															"X-RapidAPI-Key": "14cb351c01msh1c48214e3041834p18ae28jsndbaf16e16c16",
+															"X-RapidAPI-Host": "hotels4.p.rapidapi.com"}
+								 )
+    data = json.loads(response3.text)
+    with open('data2.json', 'w', encoding='utf8') as file:
+        json.dump(data, file, indent=8)
+
+    address = data['data']['propertyInfo']['summary']['location']['address']['addressLine']
+
+    return address
+
+
+def get_photo(hotel_id: str, count_photo: int) -> list:
+    """
+    Функция для получения фотографий отеля.
+    :param hotel_id: str
+    :param count_photo: int
+    :return: list
+    """
+    url3 = 'https://hotels4.p.rapidapi.com/properties/v2/detail'
+
+    hotel_params = {
+        "currency": "USD",
+        "eapid": 1,
+        "locale": "en_US",
+        "siteId": 300000001,
+        "propertyId": hotel_id
+    }
+    response3 = requests.request("POST", url3, json=hotel_params, headers={
+															"X-RapidAPI-Key": "14cb351c01msh1c48214e3041834p18ae28jsndbaf16e16c16",
+															"X-RapidAPI-Host": "hotels4.p.rapidapi.com"}
+                                 )
+    data = json.loads(response3.text)
+    img = [types.InputMediaPhoto(
+        data['data']['propertyInfo']['propertyGallery']['images'][i_num]['image']['url'])
+           for i_num in range(count_photo)]
+    return img

@@ -1,5 +1,7 @@
 import json
 import pprint
+from aiogram import types
+
 import requests
 
 
@@ -67,6 +69,31 @@ import requests
 #
 # params = {}
 
+#get addres (+ надо достать рейтинг и цену)
+
+
+def get_overview(hotel_id):
+    url3 = 'https://hotels4.p.rapidapi.com/properties/v2/detail'
+
+    hotel_params = {
+        "currency": "USD",
+        "eapid": 1,
+        "locale": "en_US",
+        "siteId": 300000001,
+        "propertyId": hotel_id
+    }
+    response3 = requests.request("POST", url3, json=hotel_params, headers=headers)
+    data = json.loads(response3.text)
+    with open('data2.json', 'w', encoding='utf8') as file:
+        json.dump(data, file, indent=8)
+
+
+    address = data['data']['propertyInfo']['summary']['location']['address']['addressLine']
+
+    return address
+
+
+
 url = "https://hotels4.p.rapidapi.com/locations/v3/search"
 
 querystring = {"q": "{}".format('рига'), "locale": "ru_RU", "langid": "1033", "siteid": "300000001"}
@@ -79,9 +106,9 @@ headers = {
 response = requests.request("GET", url, headers=headers, params=querystring)
 data = json.loads(response.text)
 
-pprint.pprint(response.text)
-print(data['sr'][0]['gaiaId'])
-print('\n\n\n\n')
+# pprint.pprint(response.text)
+# print(data['sr'][0]['gaiaId'])
+
 url = "https://hotels4.p.rapidapi.com/properties/v2/list"
 
 headers = {
@@ -120,18 +147,58 @@ response = requests.request("POST", url, json=payload, headers=headers)
 data = json.loads(response.text)
 with open('data.json', 'w', encoding='utf8') as file:
     json.dump(data, file, indent=8)
-pprint.pprint(response.text)
-
-
-
+# pprint.pprint(response.text)
 print('\n\n\n\n\n')
+# список названий отелей
+hotel_count = 5
+photo = ['да', '3']
+photo_count = 3
+hotel_list = [
+    {data["data"]["propertySearch"]["properties"][i_num]["name"]:{
+        'id': data["data"]["propertySearch"]["properties"][i_num]["id"],
+        'min_price': data["data"]["propertySearch"]["properties"][i_num]["mapMarker"]["label"]
 
 
-url3 = 'https://hotels4.p.rapidapi.com/properties/v2/detail'
+    }
+    for i_num in range(hotel_count)}
+]
+pprint.pprint(hotel_list)
 
-hotel_params = {"id": "526046"}
-response3 = requests.request("POST", url3, json=hotel_params, headers=headers)
-pprint.pprint(response3)
+answer_text = 'По вашему запросу найден результат:\n'
+
+for hotel, desc in hotel_list[0].items():
+    answer_text += "\tНазвание отеля: {name}\n" \
+                       "\t\tЦена: {price}\n" \
+                   "\t\tАдрес: {address}\n".format(
+        name=hotel,
+        price=desc['min_price'],
+        address=get_overview(hotel_id=desc['id'])
+    )
+
+print(answer_text)
+
+
+
+
+
+
+
+#get photo
+
+# url3 = 'https://hotels4.p.rapidapi.com/properties/v2/detail'
+# i_num = 3
+# hotel_params = {
+#     "currency": "USD",
+#     "eapid": 1,
+#     "locale": "en_US",
+#     "siteId": 300000001,
+#     "propertyId": "526046"
+# }
+# response3 = requests.request("POST", url3, json=hotel_params, headers=headers)
+# data = json.loads(response3.text)
+# img = [types.InputMediaPhoto(data['data']['propertyInfo']['propertyGallery']['images'][i_num]['image']['url'])
+#        for i_num in range(3)]
+
 
 
 
