@@ -16,7 +16,7 @@ def city_search(name: str) -> str:
     querystring = {"q": "{}".format(name), "locale": "ru_RU", "langid": "1033", "siteid": "300000001"}
 
     headers = {
-        "X-RapidAPI-Key": "14cb351c01msh1c48214e3041834p18ae28jsndbaf16e16c16",
+        "X-RapidAPI-Key": "f573b57c50msh82289a227babadap1c9622jsn494d656e7e5a",
         "X-RapidAPI-Host": "hotels4.p.rapidapi.com"
     }
 
@@ -39,7 +39,7 @@ def hotel_search(id: str,
                  sort: str,
                  photo:list,
                  hotel_count=5,
-                 ) -> str:
+                 ) -> list:
     """
 	Функция поиска отелей в найденном городе.
 	Возвращает список отсортированных по цене отелей.
@@ -55,7 +55,7 @@ def hotel_search(id: str,
     url = "https://hotels4.p.rapidapi.com/properties/v2/list"
 
     headers = {
-        "X-RapidAPI-Key": "14cb351c01msh1c48214e3041834p18ae28jsndbaf16e16c16",
+        "X-RapidAPI-Key": "f573b57c50msh82289a227babadap1c9622jsn494d656e7e5a",
         "X-RapidAPI-Host": "hotels4.p.rapidapi.com"
     }
     payload = {
@@ -95,25 +95,31 @@ def hotel_search(id: str,
         }
             for i_num in range(hotel_count)}
     ]
-    answer_text = 'По вашему запросу найден результат:\n\n'
     for hotel, desc in hotel_list[0].items():
-        answer_text += "\tНазвание отеля: {name}.\n" \
-                       "\t\tМинимальная цена: {price} в день.\n" \
-                       "\t\tАдрес: {adress}.\n".format(
-            name=hotel,
-            price=desc['min_price'],
-            adress=get_address(desc['id'])
-        )
-        if (photo[0] == 'да') or (photo[0] == 'Да'):
-            answer_text += '\n {photourl} \n\n\n'.format(photourl=get_photo(
-                                                                                            count_photo=int(photo[1]),
-                                                                                            hotel_id=desc['id']
-        ))
-        else:
-            answer_text += '\n\n'
+        desc['address'] = get_address(desc['id'])
+        desc['photo'] = get_photo(hotel_id=desc['id'],
+                                  count_photo=int(photo[1]))
 
 
-    return answer_text
+    # answer_text = 'По вашему запросу найден результат:\n\n'
+    # for hotel, desc in hotel_list[0].items():
+    #     answer_text += "\tНазвание отеля: {name}.\n" \
+    #                    "\t\tМинимальная цена: {price} в день.\n" \
+    #                    "\t\tАдрес: {adress}.\n".format(
+    #         name=hotel,
+    #         price=desc['min_price'],
+    #         adress=get_address(desc['id'])
+    #     )
+    #     if (photo[0] == 'да') or (photo[0] == 'Да'):
+    #         answer_text += '\n {photourl} \n\n\n'.format(photourl=get_photo(
+    #                                                                                         count_photo=int(photo[1]),
+    #                                                                                         hotel_id=desc['id']
+    #     ))
+    #     else:
+    #         answer_text += '\n\n'
+
+
+    return hotel_list
 
 def get_address(hotel_id: str) -> list:
     """
@@ -131,7 +137,7 @@ def get_address(hotel_id: str) -> list:
         "propertyId": hotel_id
     }
     response3 = requests.request("POST", url3, json=hotel_params, headers= {
-															"X-RapidAPI-Key": "14cb351c01msh1c48214e3041834p18ae28jsndbaf16e16c16",
+															"X-RapidAPI-Key": "f573b57c50msh82289a227babadap1c9622jsn494d656e7e5a",
 															"X-RapidAPI-Host": "hotels4.p.rapidapi.com"}
 								 )
     data = json.loads(response3.text)
@@ -160,11 +166,12 @@ def get_photo(hotel_id: str, count_photo: int) -> list:
         "propertyId": hotel_id
     }
     response3 = requests.request("POST", url3, json=hotel_params, headers={
-															"X-RapidAPI-Key": "14cb351c01msh1c48214e3041834p18ae28jsndbaf16e16c16",
+															"X-RapidAPI-Key": "f573b57c50msh82289a227babadap1c9622jsn494d656e7e5a",
 															"X-RapidAPI-Host": "hotels4.p.rapidapi.com"}
                                  )
     data = json.loads(response3.text)
     img = [types.InputMediaPhoto(
-        data['data']['propertyInfo']['propertyGallery']['images'][i_num]['image']['url'])
+        data['data']['propertyInfo']['propertyGallery']['images'][i_num]['image']['url'],
+    caption=data['data']['propertyInfo']['propertyGallery']['images'][i_num]['image']['description'])
            for i_num in range(count_photo)]
     return img

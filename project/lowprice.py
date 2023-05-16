@@ -1,7 +1,7 @@
 from aiogram.dispatcher import FSMContext
 from aiogram import types, Dispatcher
 from aiogram.dispatcher.filters.state import State, StatesGroup
-from create_bot import dp
+from create_bot import dp, bot
 import search
 
 class FSM_search(StatesGroup):
@@ -129,7 +129,25 @@ async def hotel_photo(message: types.Message, state: FSMContext):
 		hotel_count=data['hotel_count'],
 		photo=data['photo']
 						)
-	await message.answer(hotel_list)
+
+	for hotel, desc in hotel_list[0].items():
+		answer = 'Название отеля: {name}\n' \
+				 '\t\tМинимальная цена: {price}\n' \
+				 '\t\tАдрес: {address}\n'.format(name=hotel,
+											price=desc['min_price'],
+											address=desc['address'],
+											# photo=list(desc['photo'][i_num]['media'] for i_num in range(int(data['photo'][1])))
+											)
+
+		await message.answer(answer)
+
+		photo_group = []
+		for photo in desc['photo']:
+			photo_group.append(photo)
+
+		await message.answer_media_group(photo_group)
+
+	# await message.answer(hotel_list)
 	await state.finish()
 
 
