@@ -4,6 +4,7 @@ from aiogram.dispatcher.filters.state import State, StatesGroup
 from create_bot import dp, bot
 import search
 
+
 class FSM_search(StatesGroup):
 	city = State()
 	rooms = State()
@@ -13,24 +14,28 @@ class FSM_search(StatesGroup):
 	photo = State()
 
 
-async def start_lowprice(message: types.Message):
+async def start_lowprice(message: types.Message, state: FSMContext):
 	"""
 	Начало составления конфигурации поиска по команде /lowprice
 	"""
 	await FSM_search.city.set()
+	async with state.proxy() as data:
+		data['sort'] = 'PRICE_LOW_TO_HIGH'
 	await message.reply('Это команда для поиска самых дешёвых отелей в городе.\n'
 						'Введите город, в котором хотите остановиться.',
 						reply_markup=types.ReplyKeyboardRemove())
 
 
-# async def start_highprice(message: types.Message):
-# 	"""
-# 	Начало составления конфигурации поиска по команде /highprice
-# 	"""
-# 	await FSM_search.city.set()
-# 	await message.reply('Это команда для поиска самых дешёвых отелей в городе.\n'
-# 						'Введите город, в котором хотите остановиться.',
-# 						reply_markup=types.ReplyKeyboardRemove())
+async def start_highprice(message: types.Message, state: FSMContext):
+	"""
+	Начало составления конфигурации поиска по команде /highprice
+	"""
+	await FSM_search.city.set()
+	async with state.proxy() as data:
+		data['sort'] = 'PRICE_HIGH_TO_LOW'
+	await message.reply('Это команда для поиска самых дорогих отелей в городе.\n'
+						'Введите город, в котором хотите остановиться.',
+						reply_markup=types.ReplyKeyboardRemove())
 
 
 async def city_name(message: types.Message, state: FSMContext):
@@ -42,9 +47,11 @@ async def city_name(message: types.Message, state: FSMContext):
 
 	async with state.proxy() as data:
 		data['city_id'] = search.city_search(name=message.text)
+
 		if data['city_id'] != 'none':
 			await FSM_search.next()
 			await message.answer('Введите количество комнат.')
+
 		else:
 			await state.finish()
 			await message.reply('Такого города нет в нашем каталоге')
@@ -61,6 +68,7 @@ async def rooms_set(message: types.Message, state: FSMContext):
 	"""
 	async with state.proxy() as data:
 		data['rooms'] = int(message.text)
+
 	await FSM_search.next()
 	await message.answer('Введите дату заселения в формате - День.Месяц.Год.')
 
@@ -75,6 +83,7 @@ async def check_in_date(message: types.Message, state: FSMContext):
 	"""
 	async with state.proxy() as data:
 		data['in_date'] = message.text.split('.')
+
 	await FSM_search.next()
 	await message.answer('Введите дату уезда в формате - День.Месяц.Год.')
 
@@ -89,6 +98,7 @@ async def check_out_date(message: types.Message, state: FSMContext):
 	"""
 	async with state.proxy() as data:
 		data['out_date'] = message.text.split('.')
+
 	await FSM_search.next()
 	await message.answer('Сколько вам нужно отелей в ответе?\n')
 
@@ -104,6 +114,7 @@ async def search_count(message: types.Message, state: FSMContext):
 	"""
 	async with state.proxy() as data:
 		data['hotel_count'] = int(message.text)
+
 	await FSM_search.next()
 	await message.answer('Нужны ли Вам фотографии отеля? Да 3(количество фотографий)/Нет.\n')
 
@@ -118,14 +129,13 @@ async def hotel_photo(message: types.Message, state: FSMContext):
 	async with state.proxy() as data:
 		data['photo'] = message.text.split(' ')
 	await message.answer('Ведётся поиск...')
-	# async with state.proxy() as data:
-	# 	await message.answer(str(data))
+
 	hotel_list = search.hotel_search(
 		id=data['city_id'],
 		rooms=data['rooms'],
 		in_date=data['in_date'],
 		out_date=data['out_date'],
-		sort='PRICE_LOW_TO_HIGH',
+		sort=data['sort'],
 		hotel_count=data['hotel_count'],
 		photo=data['photo']
 						)
@@ -136,7 +146,6 @@ async def hotel_photo(message: types.Message, state: FSMContext):
 				 '\t\tАдрес: {address}\n'.format(name=hotel,
 											price=desc['min_price'],
 											address=desc['address'],
-											# photo=list(desc['photo'][i_num]['media'] for i_num in range(int(data['photo'][1])))
 											)
 
 		await message.answer(answer)
@@ -172,8 +181,8 @@ def register_handlers_lowprice(dp: Dispatcher):
 	:param dp:
 	:return:
 	"""
-	dp.register_message_handler(callback=start_lowprice, commands=['lowprice', '/bestdeal'])
-	# dp.register_message_handler(callback=start_highprice, commands=['/highprice'])
+	dp.register_message_handler(callback=start_lowprice, commands=['lowprice'])
+	dp.register_message_handler(callback=start_highprice, commands=['highprice'])
 	dp.register_message_handler(callback=city_name, state=FSM_search.city)
 	dp.register_message_handler(callback=rooms_set, state=FSM_search.rooms)
 	dp.register_message_handler(callback=check_in_date, state=FSM_search.in_date)
