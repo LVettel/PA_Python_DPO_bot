@@ -160,7 +160,7 @@ payload = {
     ],
     "resultsStartingIndex": 0,
     "resultsSize": 200,
-    "sort": "PRICE_LOW_TO_HIGH",
+    "sort": "DISTANCE",
     "filters": {"price": {
         "max": 200,
         "min": 1
@@ -180,7 +180,8 @@ photo_count = 3
 hotel_list = [
     {data["data"]["propertySearch"]["properties"][i_num]["name"]:{
         'id': data["data"]["propertySearch"]["properties"][i_num]["id"],
-        'min_price': data["data"]["propertySearch"]["properties"][i_num]["mapMarker"]["label"]
+        'min_price': data["data"]["propertySearch"]["properties"][i_num]["mapMarker"]["label"],
+        'distance': data["data"]["propertySearch"]["properties"][i_num]["destinationInfo"]["distanceFromDestination"]["value"]
     }
     for i_num in range(hotel_count)}
 ]
@@ -219,12 +220,6 @@ for hotel, desc in hotel_list[0].items():
 #     )
 #
 # print(answer_text)
-
-
-
-
-
-
 
 
 

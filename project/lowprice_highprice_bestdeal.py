@@ -7,6 +7,7 @@ import search
 
 class FSM_search(StatesGroup):
 	city = State()
+	max_price = State()
 	rooms = State()
 	in_date = State()
 	out_date = State()
@@ -21,6 +22,8 @@ async def start_lowprice(message: types.Message, state: FSMContext):
 	await FSM_search.city.set()
 	async with state.proxy() as data:
 		data['sort'] = 'PRICE_LOW_TO_HIGH'
+		data['bestdeal'] = False
+		data['max_price'] = 100
 	await message.reply('Это команда для поиска самых дешёвых отелей в городе.\n'
 						'Введите город, в котором хотите остановиться.',
 						reply_markup=types.ReplyKeyboardRemove())
@@ -33,9 +36,25 @@ async def start_highprice(message: types.Message, state: FSMContext):
 	await FSM_search.city.set()
 	async with state.proxy() as data:
 		data['sort'] = 'PRICE_HIGH_TO_LOW'
+		data['bestdeal'] = False
+		data['max_price'] = 1000
 	await message.reply('Это команда для поиска самых дорогих отелей в городе.\n'
 						'Введите город, в котором хотите остановиться.',
 						reply_markup=types.ReplyKeyboardRemove())
+
+
+async def start_bestdeal(message: types.Message, state: FSMContext):
+	"""
+	Начало составления конфигурации поиска по команде /bestdeal
+	"""
+	await FSM_search.city.set()
+	async with state.proxy() as data:
+		data['sort'] = 'DISTANCE'
+		data['bestdeal'] = True
+	await message.reply('Это команда для поиска самых удобных отелей в городе.\n'
+						'Введите город, в котором хотите остановиться.',
+						reply_markup=types.ReplyKeyboardRemove())
+
 
 
 async def city_name(message: types.Message, state: FSMContext):
@@ -48,14 +67,37 @@ async def city_name(message: types.Message, state: FSMContext):
 	async with state.proxy() as data:
 		data['city_id'] = search.city_search(name=message.text)
 
-		if data['city_id'] != 'none':
-			await FSM_search.next()
-			await message.answer('Введите количество комнат.')
+		if data['bestdeal']:
+			if data['city_id'] != 'none':
+				await FSM_search.next()
+				await message.answer('Введите максимальную ожидаемую цену в $.')
+
+			else:
+				await state.finish()
+				await message.reply('Такого города нет в нашем каталоге')
 
 		else:
-			await state.finish()
-			await message.reply('Такого города нет в нашем каталоге')
+			if data['city_id'] != 'none':
+				await FSM_search.rooms.set()
+				await message.answer('Введите количество комнат.')
 
+			else:
+				await state.finish()
+				await message.reply('Такого города нет в нашем каталоге')
+
+async def max_price(message:types.Message, state: FSMContext):
+	"""
+	Функция для команды /bestdeal. Принимает в себя максимальную ожидаемую цену у пользователя
+	и далее запрашивает количество комнат
+	:param message:
+	:param state:
+	:return:
+	"""
+	async with state.proxy() as data:
+		data['max_price'] = int(message.text)
+
+	await FSM_search.next()
+	await message.answer('Введите количество комнат.')
 
 
 async def rooms_set(message: types.Message, state: FSMContext):
@@ -107,7 +149,7 @@ async def check_out_date(message: types.Message, state: FSMContext):
 async def search_count(message: types.Message, state: FSMContext):
 	"""
 	Принимается число, количество отелей в ответе.
-	Далее идёт запрос на получение надобности фотографий.
+	Далее идёт запрос на получение надобности и количества(если нужно) фотографий.
 	:param message:
 	:param state:
 	:return:
@@ -128,7 +170,9 @@ async def hotel_photo(message: types.Message, state: FSMContext):
 	"""
 	async with state.proxy() as data:
 		data['photo'] = message.text.split(' ')
+		print(data)
 	await message.answer('Ведётся поиск...')
+
 
 	hotel_list = search.hotel_search(
 		id=data['city_id'],
@@ -137,13 +181,15 @@ async def hotel_photo(message: types.Message, state: FSMContext):
 		out_date=data['out_date'],
 		sort=data['sort'],
 		hotel_count=data['hotel_count'],
-		photo=data['photo']
+		photo=data['photo'],
+		best_deal=data['bestdeal'],
+		max_price=data['max_price']
 						)
 
 	for hotel, desc in hotel_list[0].items():
-		answer = 'Название отеля: {name}\n' \
-				 '\t\tМинимальная цена: {price}\n' \
-				 '\t\tАдрес: {address}\n'.format(name=hotel,
+		answer = 'Название отеля: {name}.\n' \
+				 'Минимальная цена: {price}.\n' \
+				 'Адрес: {address}.\n'.format(name=hotel,
 											price=desc['min_price'],
 											address=desc['address'],
 											)
@@ -155,6 +201,9 @@ async def hotel_photo(message: types.Message, state: FSMContext):
 			photo_group.append(photo)
 
 		await message.answer_media_group(photo_group)
+		if data['bestdeal']:
+			distance = 'Расстояние до центра: {dist} км.'.format(dist=desc['distance'])
+			await message.answer(distance)
 
 	# await message.answer(hotel_list)
 	await state.finish()
@@ -183,7 +232,9 @@ def register_handlers_lowprice(dp: Dispatcher):
 	"""
 	dp.register_message_handler(callback=start_lowprice, commands=['lowprice'])
 	dp.register_message_handler(callback=start_highprice, commands=['highprice'])
+	dp.register_message_handler(callback=start_bestdeal, commands=['bestdeal'])
 	dp.register_message_handler(callback=city_name, state=FSM_search.city)
+	dp.register_message_handler(callback=max_price, state=FSM_search.max_price)
 	dp.register_message_handler(callback=rooms_set, state=FSM_search.rooms)
 	dp.register_message_handler(callback=check_in_date, state=FSM_search.in_date)
 	dp.register_message_handler(callback=check_out_date, state=FSM_search.out_date)
@@ -197,5 +248,5 @@ def register_handlers_lowprice(dp: Dispatcher):
 									FSM_search.out_date,
 									FSM_search.photo
 								],
-								commands=['/cancel'])
+								commands=['cancel'])
 

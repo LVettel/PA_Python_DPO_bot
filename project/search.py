@@ -37,12 +37,15 @@ def hotel_search(id: str,
                  in_date: list,
                  out_date: list,
                  sort: str,
-                 photo:list,
-                 hotel_count=5,
+                 photo: list,
+                 hotel_count: int,
+                 best_deal: bool,
+                 max_price: int,
                  ) -> list:
     """
 	Функция поиска отелей в найденном городе.
 	Возвращает список отсортированных по цене отелей.
+    :param bestdeal: bool
     :param hotel_count: int
     :param photo: list
 	:param id: str
@@ -81,7 +84,7 @@ def hotel_search(id: str,
         "resultsSize": 200,
         "sort": "{}".format(sort),
         "filters": {"price": {
-            "max": 200,
+            "max": max_price,
             "min": 1
         }}
     }
@@ -92,6 +95,7 @@ def hotel_search(id: str,
         {data["data"]["propertySearch"]["properties"][i_num]["name"]: {
 			'id': data["data"]["propertySearch"]["properties"][i_num]["id"],
             'min_price': data["data"]["propertySearch"]["properties"][i_num]["mapMarker"]["label"],
+            'distance': data["data"]["propertySearch"]["properties"][i_num]["destinationInfo"]["distanceFromDestination"]["value"]
         }
             for i_num in range(hotel_count)}
     ]

@@ -1,9 +1,9 @@
 from aiogram import executor, types
 from create_bot import dp
-from project import main_handlers, lowprice_highprice, search
+from project import main_handlers, lowprice_highprice_bestdeal, search
 
 main_handlers.register_handlers_main(dp)
-lowprice_highprice.register_handlers_lowprice(dp)
+lowprice_highprice_bestdeal.register_handlers_lowprice(dp)
 
 
 
