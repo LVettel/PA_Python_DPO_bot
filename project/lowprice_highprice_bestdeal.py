@@ -179,7 +179,7 @@ async def hotel_photo(message: types.Message, state: FSMContext):
 	async with state.proxy() as data:
 		data['photo'] = message.text.split(' ')
 		print(data)
-		history.config_create(data=data)
+		config_id = history.config_create(data=data)
 	await message.answer('Ведётся поиск...')
 
 
@@ -210,7 +210,7 @@ async def hotel_photo(message: types.Message, state: FSMContext):
 		for photo in desc['photo']:
 			photo_group.append(photo)
 
-		history.results_create(data=hotel_list, photo_group=photo_group)
+		history.results_create(data=hotel_list, photo_group=photo_group, config_id=config_id)
 
 		await message.answer_media_group(photo_group)
 		if data['bestdeal']:
@@ -228,9 +228,11 @@ async def reset_state(message: types.Message, state: FSMContext):
 	:param state:
 	:return:
 	"""
+
 	current_state = await state.get_state()
 	if current_state is None:
 		return
+
 	await message.reply('Отмена составления конфигурации поиска')
 	await state.finish()
 

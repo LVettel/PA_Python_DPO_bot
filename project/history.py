@@ -40,15 +40,24 @@ def config_create(data: dict):
     in_date = data['in_date'],
     out_date = data['out_date'],
     )
+    return SearchConfig.select('id').where(
+        SearchConfig.telegram_id == data['user_id'],
+        SearchConfig.command == data['command'],
+        SearchConfig.city == data['city_name'],
+        SearchConfig.rooms == data['rooms'],
+        SearchConfig.in_date == data['in_date'],
+        SearchConfig.out_date == data['out_date'],
+        )
 
 
 
-def results_create(data: list, photo_group: list):
+def results_create(data: list, photo_group: list, config_id):
     for hotel, desc in data[0].items():
         Results.create(name=hotel,
                        min_price=desc['min_price'],
                        address=desc['address'],
-                       photo=photo_group
+                       photo=photo_group,
+                       config=
                        )
 
 
