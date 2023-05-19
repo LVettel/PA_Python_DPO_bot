@@ -3,6 +3,7 @@ from aiogram import types, Dispatcher
 from aiogram.dispatcher.filters.state import State, StatesGroup
 from create_bot import dp, bot
 import search
+import history
 
 
 class FSM_search(StatesGroup):
@@ -21,6 +22,8 @@ async def start_lowprice(message: types.Message, state: FSMContext):
 	"""
 	await FSM_search.city.set()
 	async with state.proxy() as data:
+		data['user_id'] = message.from_user.id
+		data['command'] = 'lowprice'
 		data['sort'] = 'PRICE_LOW_TO_HIGH'
 		data['bestdeal'] = False
 		data['max_price'] = 100
@@ -35,6 +38,8 @@ async def start_highprice(message: types.Message, state: FSMContext):
 	"""
 	await FSM_search.city.set()
 	async with state.proxy() as data:
+		data['user_id'] = message.from_user.id
+		data['command'] = 'highprice'
 		data['sort'] = 'PRICE_HIGH_TO_LOW'
 		data['bestdeal'] = False
 		data['max_price'] = 1000
@@ -49,6 +54,8 @@ async def start_bestdeal(message: types.Message, state: FSMContext):
 	"""
 	await FSM_search.city.set()
 	async with state.proxy() as data:
+		data['user_id'] = message.from_user.id
+		data['command'] = 'bestdeal'
 		data['sort'] = 'DISTANCE'
 		data['bestdeal'] = True
 	await message.reply('Это команда для поиска самых удобных отелей в городе.\n'
@@ -65,6 +72,7 @@ async def city_name(message: types.Message, state: FSMContext):
 	"""
 
 	async with state.proxy() as data:
+		data['city_name'] = message.text
 		data['city_id'] = search.city_search(name=message.text)
 
 		if data['bestdeal']:
@@ -171,7 +179,9 @@ async def hotel_photo(message: types.Message, state: FSMContext):
 	async with state.proxy() as data:
 		data['photo'] = message.text.split(' ')
 		print(data)
+		config_id = history.config_create(data=data)
 	await message.answer('Ведётся поиск...')
+
 
 
 	hotel_list = search.hotel_search(
@@ -200,6 +210,8 @@ async def hotel_photo(message: types.Message, state: FSMContext):
 		for photo in desc['photo']:
 			photo_group.append(photo)
 
+		history.results_create(data=hotel_list, photo_group=photo_group, config_id=config_id)
+
 		await message.answer_media_group(photo_group)
 		if data['bestdeal']:
 			distance = 'Расстояние до центра: {dist} км.'.format(dist=desc['distance'])
@@ -216,9 +228,11 @@ async def reset_state(message: types.Message, state: FSMContext):
 	:param state:
 	:return:
 	"""
+
 	current_state = await state.get_state()
 	if current_state is None:
 		return
+
 	await message.reply('Отмена составления конфигурации поиска')
 	await state.finish()
 
