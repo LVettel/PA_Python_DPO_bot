@@ -3,6 +3,7 @@ import pprint
 import requests
 import json
 from aiogram import types, Dispatcher
+import history
 from project import search
 from create_bot import dp
 
@@ -49,8 +50,11 @@ async def bothelp(message: types.Message):
 
 
 
-async def history(message: types.Message):
+async def user_history(message: types.Message):
 	await message.reply('История поиска.', reply_markup=types.ReplyKeyboardRemove())
+	user_history = history.get_history(message.from_user.id)
+	await message.answer(user_history)
+
 
 def register_handlers_main(dp: Dispatcher):
 	"""
@@ -59,7 +63,4 @@ def register_handlers_main(dp: Dispatcher):
 	:return:
 	"""
 	dp.register_message_handler(callback=bothelp, commands=['start', 'help'])
-	#
-	# dp.register_message_handler(callback=low_price, commands=['highprice'])
-	# dp.register_message_handler(callback=low_price, commands=['bestdeal'])
 	dp.register_message_handler(callback=history, commands=['history'])
