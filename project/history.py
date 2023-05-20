@@ -57,7 +57,7 @@ def results_create(data: list, photo_group: list, config_id):
                        min_price=desc['min_price'],
                        address=desc['address'],
                        photo=photo_group,
-                       config=
+                       config=config_id
                        )
 
 
