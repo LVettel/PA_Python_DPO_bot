@@ -1,5 +1,4 @@
-from aiogram import types, Dispatcher
-from project.create_bot import dp, bot
+from aiogram import types
 import requests
 import json
 
@@ -27,9 +26,6 @@ def city_search(name: str) -> str:
         return data['sr'][0]['gaiaId']
     else:
         return 'none'
-
-
-
 
 
 def hotel_search(id: str,
@@ -93,9 +89,11 @@ def hotel_search(id: str,
     data = json.loads(response.text)
     hotel_list = [
         {data["data"]["propertySearch"]["properties"][i_num]["name"]: {
-			'id': data["data"]["propertySearch"]["properties"][i_num]["id"],
+            'id': data["data"]["propertySearch"]["properties"][i_num]["id"],
             'min_price': data["data"]["propertySearch"]["properties"][i_num]["mapMarker"]["label"],
-            'distance': data["data"]["propertySearch"]["properties"][i_num]["destinationInfo"]["distanceFromDestination"]["value"]
+            'distance':
+                data["data"]["propertySearch"]["properties"][i_num]["destinationInfo"]["distanceFromDestination"][
+                    "value"]
         }
             for i_num in range(hotel_count)}
     ]
@@ -104,26 +102,8 @@ def hotel_search(id: str,
         desc['photo'] = get_photo(hotel_id=desc['id'],
                                   count_photo=int(photo[1]))
 
-
-    # answer_text = 'По вашему запросу найден результат:\n\n'
-    # for hotel, desc in hotel_list[0].items():
-    #     answer_text += "\tНазвание отеля: {name}.\n" \
-    #                    "\t\tМинимальная цена: {price} в день.\n" \
-    #                    "\t\tАдрес: {adress}.\n".format(
-    #         name=hotel,
-    #         price=desc['min_price'],
-    #         adress=get_address(desc['id'])
-    #     )
-    #     if (photo[0] == 'да') or (photo[0] == 'Да'):
-    #         answer_text += '\n {photourl} \n\n\n'.format(photourl=get_photo(
-    #                                                                                         count_photo=int(photo[1]),
-    #                                                                                         hotel_id=desc['id']
-    #     ))
-    #     else:
-    #         answer_text += '\n\n'
-
-
     return hotel_list
+
 
 def get_address(hotel_id: str) -> list:
     """
@@ -140,10 +120,10 @@ def get_address(hotel_id: str) -> list:
         "siteId": 300000001,
         "propertyId": hotel_id
     }
-    response3 = requests.request("POST", url3, json=hotel_params, headers= {
-															"X-RapidAPI-Key": "f573b57c50msh82289a227babadap1c9622jsn494d656e7e5a",
-															"X-RapidAPI-Host": "hotels4.p.rapidapi.com"}
-								 )
+    response3 = requests.request("POST", url3, json=hotel_params, headers={
+        "X-RapidAPI-Key": "f573b57c50msh82289a227babadap1c9622jsn494d656e7e5a",
+        "X-RapidAPI-Host": "hotels4.p.rapidapi.com"}
+                                 )
     data = json.loads(response3.text)
     with open('data2.json', 'w', encoding='utf8') as file:
         json.dump(data, file, indent=8)
@@ -170,12 +150,12 @@ def get_photo(hotel_id: str, count_photo: int) -> list:
         "propertyId": hotel_id
     }
     response3 = requests.request("POST", url3, json=hotel_params, headers={
-															"X-RapidAPI-Key": "f573b57c50msh82289a227babadap1c9622jsn494d656e7e5a",
-															"X-RapidAPI-Host": "hotels4.p.rapidapi.com"}
+        "X-RapidAPI-Key": "f573b57c50msh82289a227babadap1c9622jsn494d656e7e5a",
+        "X-RapidAPI-Host": "hotels4.p.rapidapi.com"}
                                  )
     data = json.loads(response3.text)
     img = [types.InputMediaPhoto(
         data['data']['propertyInfo']['propertyGallery']['images'][i_num]['image']['url'],
-    caption=data['data']['propertyInfo']['propertyGallery']['images'][i_num]['image']['description'])
-           for i_num in range(count_photo)]
+        caption=data['data']['propertyInfo']['propertyGallery']['images'][i_num]['image']['description'])
+        for i_num in range(count_photo)]
     return img
